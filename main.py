@@ -72,7 +72,6 @@ class PomodoroTimer(QWidget):
 
     def stop_timer(self):
         self.timer.stop()
-
     def update_display(self):
         self.time_left = self.time_left.addSecs(-1)
         current_display = self.tabs.currentWidget().timer_display
@@ -85,14 +84,11 @@ class PomodoroTimer(QWidget):
                 app_name='Pomodoro Timer'
             )
             self.reset_current_tab()
-            if self.current_tab == 0:  # Task finished, switch to Short Break
-                self.current_tab = 1
+            if self.tabs.currentIndex() == 0:  # Task finished, switch to Short Break
                 next_tab_index = 1
-            elif self.current_tab == 1:  # Short Break finished, switch back to Task
-                self.current_tab = 0
+            elif self.tabs.currentIndex() == 1:  # Short Break finished, switch back to Task
                 next_tab_index = 0
-            elif self.current_tab == 2:  # Long Break finished, switch back to Task
-                self.current_tab = 0
+            elif self.tabs.currentIndex() == 2:  # Long Break finished, switch back to Task
                 next_tab_index = 0
             self.tabs.setCurrentIndex(next_tab_index)
 
