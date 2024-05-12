@@ -6,6 +6,7 @@ class PomodoroTimer(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
+        self.timerStarted = False
 
     def initUI(self):
         self.setWindowTitle('Pomodoro Timer')
@@ -30,6 +31,7 @@ class PomodoroTimer(QWidget):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_display)
+        self.tabs.currentChanged.connect(self.tab_changed)
 
         self.current_tab = 0
         self.running = False
@@ -39,11 +41,14 @@ class PomodoroTimer(QWidget):
         tab.timer_input = QLineEdit(initial_time)
         tab.timer_display = QLabel(initial_time)
         tab.start_button = QPushButton(button_label)
+        tab.stop_button = QPushButton("Stop Timer")
         tab.layout.addWidget(tab.timer_input)
         tab.layout.addWidget(tab.timer_display)
         tab.layout.addWidget(tab.start_button)
+        tab.layout.addWidget(tab.stop_button)
         tab.setLayout(tab.layout)
         tab.start_button.clicked.connect(lambda: self.toggle_timer())
+        tab.stop_button.clicked.connect(lambda: self.stop_timer())
         tab.timer_input.textChanged.connect(lambda: self.update_initial_time())
 
     def update_initial_time(self):
@@ -54,29 +59,37 @@ class PomodoroTimer(QWidget):
     def toggle_timer(self):
         current_button = self.tabs.currentWidget().start_button
         if current_button.text() == "Start Timer":
-            time_text = self.tabs.currentWidget().timer_input.text()
+            time_text = self.tabs.currentWidget().timer_display.text()
             minutes, seconds = map(int, time_text.split(":"))
             self.start_timer(minutes, seconds)
-            current_button.setText("Stop Timer")
+            current_button.setText("Pause Timer")
             self.running = True
             self.disable_tab_switching()
         else:
-            self.stop_timer()
+            self.pause_timer()
             current_button.setText("Start Timer")
             self.running = False
             self.enable_tab_switching()
 
     def start_timer(self, minutes, seconds):
+        self.timerStarted = True
         self.time_left = QTime(0, minutes, seconds)
         self.timer.start(1000)
 
     def stop_timer(self):
+        if self.timerStarted == True:
+            self.time_left = QTime(0, 0, 1)
+            self.timer.start(1000)
+
+    def pause_timer(self):
         self.timer.stop()
+        
     def update_display(self):
         self.time_left = self.time_left.addSecs(-1)
         current_display = self.tabs.currentWidget().timer_display
         current_display.setText(self.time_left.toString("mm:ss"))
         if self.time_left.toString("mm:ss") == "00:00":
+            self.timerStarted = False
             self.timer.stop()
             notification.notify(
                 title='Pomodoro Timer',
@@ -98,6 +111,10 @@ class PomodoroTimer(QWidget):
         self.tabs.currentWidget().start_button.setText("Start Timer")
         self.running = False
         self.enable_tab_switching()
+
+
+    def tab_changed(self):
+        self.timerStarted = False
 
     def disable_tab_switching(self):
         for i in range(self.tabs.count()):
